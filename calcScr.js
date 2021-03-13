@@ -6,17 +6,17 @@ Design: Think of cleaner design.
 Errors: 
     - Cannot handle decimal arithmetic, use parseFloats.
     - Double check if operator spam is still ok.
+    - Fix operator input clearing screen.
+
+Strange things:
+    - JS handles 0 / 0 as NaN.
+
 ========================================================================
 */
 
-initialize();
+clear_screen();
+
 var screen = document.getElementById("display");
-
-
-function clear_screen() {
-    screen.value = "";
-    divide_zero_status(false);
-}
 
 function divide_zero_status(status) {
     dv_zero_flag = status;
@@ -27,41 +27,42 @@ function divide_zero_status(status) {
 }
 
 function calculate(opr) {
-    res = operator(opr, res, parseInt(screen.value));
-    if(res == Infinity) {
+    res = operator(opr, res, parseFloat(accum));
+    if(res == Infinity || isNaN(res)) {
+        console.log(res);
+        clear_screen();
         screen.value = "Divide by Zero Error";
-        initialize();
         divide_zero_status(true);
         return;
     }
     screen.value = res;
+    accum = res;
 }
 
 function numProcess (input) {
 
     if(isNaN(input)) {
-        if(isNaN(parseInt(screen.value)) || (op1_flag == true && op == input)) {
+        if(isNaN(parseFloat(accum)) || (op1_flag == true && op == input)) {
             console.log("1")
             return;
         }
 
-        else if(input == "=") {
-            console.log("2")
-            calculate(op);
-            op = "=";
-            op1_flag = true;
+        else if(input == "=" && op == "") {
+            screen.value = parseFloat(accum);
+            op = input;
         }
-        //add another variable to store screen.value? 
+        
         else if (op1_flag) {
             console.log("3")
             op = input;
-            res = parseInt(screen.value);
-            clear_screen();
+            res = parseFloat(accum);
+            accum = "";
             op1_flag = false;
         }
 
         else {
             console.log("4")
+            console.log("operator else:", op);
             calculate(op);
             op = input;
             op1_flag = true;
@@ -70,18 +71,20 @@ function numProcess (input) {
     
     else if(dv_zero_flag || op == "=") {
         clear_screen();
-        op = "";
-        divide_zero_status(false);
+        accum += input;
         screen.value += input;
     }
 
     else if (op1_flag && op) {
         op1_flag = false;
-        clear_screen();
+        accum = screen.value = "";
+        accum += input;
         screen.value += input;
     }
 
     else {
+        if(accum == 0) {screen.value = ""};
+        accum += input;
         screen.value += input;
     }
   
@@ -97,15 +100,18 @@ function operator (op, op1, op2) {
             return op1 * op2;
         case "/":
             return op1 / op2;
-        case "=":
-            return op1 / op2;
+        case "^":
+            return Math.pow(op1, op2);
     }
 
 }
 
-function initialize() {
+function clear_screen() {
+    accum = "";
+    screen.value = "";
     res = 0;
     op1_flag = true;
     op = "";
+    divide_zero_status(false);
     dv_zero_flag = false;
 }
